@@ -17,10 +17,11 @@ def download_image_by_url(dir_name, urls, image_names=['image']):
     # help us record how fast we are downloading
     count = 0
     t0 = time.time()
+    prev_t = t0
     for url, image_name in zip(urls, image_names):
         if count % IMAGE_THRESHOLD == 0 and count != 0:
-            print("downloaded {} images in the past {} secs".format(IMAGE_THRESHOLD, time.time() - t0))
-            t0 = time.time()
+            print("downloaded {} images in the past {} secs".format(IMAGE_THRESHOLD, time.time() - prev_t))
+            prev_t = time.time()
         path_to_write = os.path.join(dir_name, image_name + url.split('.')[-1])
         try:
             urllib.request.urlretrieve(url, path_to_write)
@@ -28,4 +29,8 @@ def download_image_by_url(dir_name, urls, image_names=['image']):
             print("exception {} occurred when downloading image {}".format(e, count))
         # update count
         count += 1
+    
+    curr_t = time.time()
+    print("total {} images downloaded in the past {} sec".format(len(count), curr_t - t0))
+    print("average download speed: {} sec per image".format((curr_t - t0) / count))
 
