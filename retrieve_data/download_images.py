@@ -3,10 +3,17 @@ import os
 import sys
 import urllib
 import time
+import math
+import multiprocessing as mp
+import socket
 
 IMAGE_THRESHOLD = 10
+SOCKET_TIMEOUT = 5   # 5 secs according to https://docs.python.org/2/library/socket.html#socket.socket.settimeout
 
-def download_image_by_url(dir_name, urls, image_names=['image']):
+def download_image_by_url(dir_name, urls, image_names=['image'], set_timeout=False):
+    print("inputs", dir_name, len(urls), len(image_names))
+    if set_timeout:
+        socket.setdefaulttimeout(SOCKET_TIMEOUT)
     if len(image_names) == 1:
         # add unique labels to images
         image_names = ['{}_{}'.format(image_names[0], i) for i in range(len(urls))]
@@ -31,6 +38,22 @@ def download_image_by_url(dir_name, urls, image_names=['image']):
         count += 1
     
     curr_t = time.time()
-    print("total {} images downloaded in the past {} sec".format(len(count), curr_t - t0))
+    print("total {} images downloaded in the past {} sec".format(count, curr_t - t0))
     print("average download speed: {} sec per image".format((curr_t - t0) / count))
 
+def multiprocess_download_image_by_url(dir_name, urls, image_names=['image'], nprocess=8):
+    # set up timeout
+    socket.setdefaulttimeout(SOCKET_TIMEOUT)
+    # set up input arguments so they can be used in parallel
+    if len(image_names) == 1:
+        # add unique labels to images
+        image_names = ['{}_{}'.format(image_names[0], i) for i in range(len(urls))]
+    urls_per_process = math.ceil(len(urls) / nprocess)
+    input_args = [(dir_name,
+                   urls[urls_per_process * i: urls_per_process * (i + 1)],
+                   image_names[urls_per_process * i: urls_per_process * (i + 1)]) for i in range(nprocess)]
+    # print(input_args[:10])
+
+    with mp.Pool(processes=nprocess) as pool:
+        pool.starmap(download_image_by_url, input_args)
+        

@@ -1,3 +1,18 @@
+# Update: Analysis of10,000 pizza related images
+## Is 10,000 enough?
+* CIFAR and MNIST have 60,000 images, but their images are much smaller, i.e. easier to fit in memory
+* 10,000 images do have much higher median and mean compared to 1,000 images. It may be a sign of not true representation of the training set
+* For now
+    * use all 10,000 images with 80, 20 for train, validation split
+    * Generate 2,000 more images for testing
+* If we do need to get more images later, e.g. increase it to 60,000 to match with MNIST or CIFAR
+    * Our data collection pipeline can easily handle that: 8 threads finished all 10,000 images in like 5 mins
+    * Those 10,000 images look still very pizza related, so there are probahbly more than enough pizza images out there
+
+## Statistics of 10,000 pizza images
+![Distribution](view_diff_in_10000_pizza_images.png)\
+Median: (15884.0, Mean: 21519.4432)
+
 # Analysis of 1000 pizza related images
 
 ## Size Estimation
@@ -39,7 +54,7 @@ different url types
 * do differentiate
 * However, variation can be HUGE \
 ![Distribution](view_diff_in_1000_pizza_images.png)\
-Meidan: 2092.5, Mean: 6544.471
+Median: 2092.5, Mean: 6544.471
 
 ```python
 # retrieve data

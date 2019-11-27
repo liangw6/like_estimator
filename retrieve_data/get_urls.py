@@ -2,6 +2,7 @@ from flickrapi import FlickrAPI
 import pandas as pd
 import os
 import time
+import pickle
 
 FLICKR_KEY = os.environ["FLICKR_KEY"]
 FLICKR_SECRET = os.environ["FLICKR_SECRET"]
@@ -18,7 +19,7 @@ TIME_THRESHOLD = 100
 # url_t: URL of thumbnail, 100 on longest side size image
 
 
-def get_urls_by_tag(image_tag, max_count=100, url_type='url_o'):
+def get_urls_by_tag(image_tag, max_count=100, url_type='url_o', pickle_file=None):
     """get a number of urls for images by their tags
     
     Arguments:
@@ -63,6 +64,11 @@ def get_urls_by_tag(image_tag, max_count=100, url_type='url_o'):
 
     # cast views into integers
     views = [int(i) for i in views]
+    if pickle_file is not None:
+        with open(pickle_file, 'wb') as handle:
+            pickle.dump((urls, views), handle, protocol=pickle.HIGHEST_PROTOCOL)
+        print("All photo urls have been saved to pickle file {}".format(pickle_file))
+
     return urls, views
 
 
