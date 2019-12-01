@@ -29,7 +29,7 @@ def download_image_by_url(dir_name, urls, image_names=['image'], set_timeout=Fal
         if count % IMAGE_THRESHOLD == 0 and count != 0:
             print("downloaded {} images in the past {} secs".format(IMAGE_THRESHOLD, time.time() - prev_t))
             prev_t = time.time()
-        path_to_write = os.path.join(dir_name, image_name + url.split('.')[-1])
+        path_to_write = os.path.join(dir_name, image_name + '.' + url.split('.')[-1])
         try:
             urllib.request.urlretrieve(url, path_to_write)
         except Exception as e:
@@ -57,3 +57,17 @@ def multiprocess_download_image_by_url(dir_name, urls, image_names=['image'], np
     with mp.Pool(processes=nprocess) as pool:
         pool.starmap(download_image_by_url, input_args)
         
+def run(dir_name, url_and_view_file):
+    # load urla nd view file
+    with open(pickel_file_name, 'rb') as handle:
+        curr_urls, curr_views = pickle.load(handle)
+    if len(curr_urls) != len(curr_views):
+        raise ValueError("number of urls is {} while number of views is {}".format(len(curr_urls), len(curr_views)))
+
+    # download images with multi-processes
+    multiprocess_download_image_by_url(dir_name, curr_urls)
+
+    # save views
+    view_path = os.path.join(dir_name, "views_count.pkl")
+    with open(view_path, 'wb') as handle:
+        pickle.dump(curr_views, handle, protocol=pickle.HIGHEST_PROTOCOL)
