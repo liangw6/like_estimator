@@ -29,6 +29,23 @@ What to predict?
 
 * Many other methods to reduce skewness have been tried. But 1. skewness is still very severe, and 2. they strip away the actual meaning of the prediction.
 
+```Python
+from scipy import stats
+
+# contains duplicated calculation, but since this is only run once for entire data collection, this is fine
+# this is the cleanest calculation
+[stats.percentileofscore(retrieved_views, i, 'rank') for i in retrieved_views]
+
+# some sample outputs
+print(retrieved_views[:5])     # [79345, 9890, 30888, 35527, 45208]
+print(percentage_views[:5])    # [94.66, 42.63, 80.74, 83.9, 85.49]
+
+# to produce the figures below
+sns.distplot(percentage_views)
+```
+
+### All figures below are generated using 10,000 pizza images dataset
+
 View distribution in percentage
 
 ![view_in_percentage](view_percentage_dist.png)
