@@ -80,3 +80,43 @@ Mean Squared Error on `percentage of the view counts`
 ![loss](mean_square_error.png)
 
 ## Architecture
+
+### Single Fully Connected Layer with 800 x 800 x 3 params
+
+* Even with slowest learning rate, loss is exploding
+
+* Possibly Due to large number of parameters in the layers
+
+```
+iter 0 loss 0.3730698823928833
+iter 1 loss 4.005115509033203
+iter 2 loss 61.52337646484375
+iter 3 loss 888.7198486328125
+iter 4 loss 13382.470703125
+iter 5 loss 224991.359375
+iter 6 loss 4239744.0
+iter 7 loss 74775160.0
+iter 8 loss 1077042688.0
+iter 9 loss 12655656960.0
+iter 10 loss 164620009472.0
+iter 11 loss 2449315987456.0
+iter 12 loss 41244558360576.0
+iter 13 loss 436946786582528.0
+iter 14 loss 4855126594420736.0
+
+# lr was 10-6 and float point precision only allows 10-7
+```
+
+Solution
+
+* Build CNN with many downsampling layers in the early stage -> bring down number of params. Follow advice from the post (https://ai.stackexchange.com/questions/3938/how-to-handle-images-of-large-sizes-in-cnn)
+
+* If all other measures failed, Use smaller images
+
+Other details:
+
+* Even though dynamically loading in samples, the training speed is not too terrible
+
+* During setup, didn't realize torch comes with cuda, so you only need an up-to-date nvidia driver to make torch run on GPU (AMAZING)
+
+* batch size was 16 and memory consumption was 1 or 2 GB. This should be fair enough to train on a larger CNN, so other memory space will be left to CNN parameters
