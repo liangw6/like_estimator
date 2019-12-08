@@ -81,6 +81,168 @@ Mean Squared Error on `percentage of the view counts`
 
 ## Architecture
 
+### Dark Net
+
+* Smaller Simple Net with a single downsample in the first layer
+
+* Took ~ 4 Hours and with batch size of 16, occupied almost all GPU memory.
+
+* Improved Accuracy Substantially
+
+```
+train avg l1 diff from ground truth: 0.0790
+test avg l1 diff from ground truth: 0.0864
+```
+
+Loss Decrease:
+
+```
+Epoch 0
+[1,   100] loss: 0.386
+[1,   200] loss: 0.301
+[1,   300] loss: 0.278
+[1,   400] loss: 0.256
+[1,   500] loss: 0.245
+Epoch 1
+[2,   100] loss: 0.234
+[2,   200] loss: 0.223
+[2,   300] loss: 0.217
+[2,   400] loss: 0.212
+[2,   500] loss: 0.212
+Epoch 2
+[3,   100] loss: 0.198
+[3,   200] loss: 0.192
+[3,   300] loss: 0.198
+[3,   400] loss: 0.196
+[3,   500] loss: 0.181
+```
+
+![loss_f](dark_net.png)
+
+* Other details:
+
+    * Removed dropout from original simpleNet. Dropout seems to make the program hard to train
+
+    * Small batch size of 4 also made it hard to train the network. Thus, it is trained on batch size of 16
+
+
+### Simple Net
+
+* 12 layer network designed for CIFAR-10 with image size of (3, 32, 32). Achieved over 86% test accuracy on CIFAR-10 when trained on my personal computer.
+
+Problem: `CANNOT RUN`. SimpleNet tries to maintain the image size throughout the first 10ish layers, and then downsamples through maxpool the size down.
+
+Because our input image is (3, 800, 800), Pytorch would have to spend a lot of memory to save intermediate states, which will be used by backprop later. It turns out to too much for the GPU to handle
+
+Following error occurred even with batch size of 4 :(
+```
+RuntimeError: CUDA out of memory. Tried to allocate 1.22 GiB (GPU 0; 7.92 GiB total capacity; 5.53 GiB already allocated; 878.31 MiB free; 475.00 KiB cached)
+```
+
+### Multi-Layer Convolution
+
+Architecture
+```Python
+
+nn.Sequential(
+
+    # layer 1
+    nn.Conv2d(3, 10, kernel_size=5, stride=1, padding=1),
+    nn.BatchNorm2d(10),
+    nn.MaxPool2d(3, stride=3),
+    nn.ReLU(),
+
+    # layer 2
+    nn.Conv2d(10, 20, kernel_size=5, stride=1, padding=1),
+    nn.BatchNorm2d(20),
+    nn.MaxPool2d(5, stride=5),
+    nn.ReLU(),
+
+    # layer 3
+    nn.Conv2d(20, 20, kernel_size=5, stride=1, padding=1),
+    nn.BatchNorm2d(20),
+    nn.MaxPool2d(5, stride=5),
+    nn.ReLU(),
+
+)
+
+# followed by fc of 20 * 10 * 10
+```
+
+Performance Updates:
+(After changing loss function to l1_loss and run the model for 30 epoches)
+```
+# NOT BAD!!! Definitely better than any random guess
+train accu:  0.1094
+test accu:  0.1134
+```
+
+IT IS ACTUALLY DOING SOMETHING!!! loss is decreasing!
+```
+[1,   100] loss: 0.193
+[1,   200] loss: 0.168
+[1,   300] loss: 0.152
+[1,   400] loss: 0.127
+[1,   500] loss: 0.118
+Epoch 1
+[2,   100] loss: 0.109
+[2,   200] loss: 0.103
+[2,   300] loss: 0.091
+[2,   400] loss: 0.092
+[2,   500] loss: 0.087
+Epoch 2
+[3,   100] loss: 0.086
+[3,   200] loss: 0.080
+[3,   300] loss: 0.091
+[3,   400] loss: 0.079
+[3,   500] loss: 0.077
+Epoch 3
+[4,   100] loss: 0.071
+[4,   200] loss: 0.071
+[4,   300] loss: 0.073
+[4,   400] loss: 0.070
+[4,   500] loss: 0.068
+Epoch 4
+[5,   100] loss: 0.073
+[5,   200] loss: 0.066
+[5,   300] loss: 0.064
+[5,   400] loss: 0.068
+[5,   500] loss: 0.061
+Epoch 5
+[6,   100] loss: 0.061
+[6,   200] loss: 0.064
+[6,   300] loss: 0.058
+[6,   400] loss: 0.062
+[6,   500] loss: 0.060
+Epoch 6
+[7,   100] loss: 0.056
+[7,   200] loss: 0.057
+```
+ #### Concern:
+ 
+* Squared loss is actually inaccurate since .5^2 = .25
+
+   * Solution: use torch.nn.L1Loss so that loss is NOT squared
+
+``` 
+Small try with l1 loss:
+
+[1,   100] loss: 0.353
+[1,   200] loss: 0.315
+[1,   300] loss: 0.290
+[1,   400] loss: 0.279
+[1,   500] loss: 0.263
+```
+
+* GPU still has a lot of space. Let's get deeper models
+
+* 16 batch size may be small. But
+
+```
+In general: Larger batch sizes result in faster progress in training, but don't always converge as fast. Smaller batch sizes train slower, but can converge faster. It's definitely problem dependent.
+```
+
+
 ### Single Fully Connected Layer with 800 x 800 x 3 params
 
 * Even with slowest learning rate, loss is exploding
@@ -120,3 +282,4 @@ Other details:
 * During setup, didn't realize torch comes with cuda, so you only need an up-to-date nvidia driver to make torch run on GPU (AMAZING)
 
 * batch size was 16 and memory consumption was 1 or 2 GB. This should be fair enough to train on a larger CNN, so other memory space will be left to CNN parameters
+
